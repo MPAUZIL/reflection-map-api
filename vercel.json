@@ -1,5 +1,9 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/chatbot.html" }
+  "version": 2,
+  "builds": [
+    { "src": "chatbot.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/", "dest": "/chatbot.html" }
   ]
 }
