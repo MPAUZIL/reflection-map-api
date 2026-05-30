@@ -115,7 +115,8 @@ app.post('/generate-map', async (req, res) => {
 
 app.get('/openapi.json', (req, res) => {
   const host = req.headers.host || `localhost:${PORT}`;
-  res.json(buildOpenAPISchema(`${req.protocol}://${host}`));
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  res.json(buildOpenAPISchema(`${protocol}://${host}`));
 });
 
 // ── Cleanup ───────────────────────────────────────────────────────────────────
