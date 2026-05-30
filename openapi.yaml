@@ -1,0 +1,165 @@
+openapi: 3.0.0
+info:
+  title: Personal Reflection Map API
+  version: 1.0.0
+  description: >
+    Generates a Personal Reflection Map image (SVG or PNG) from 8 percentage
+    values representing two perspectives — "Me" and "Other" — across four
+    dimensions: Objective, Facts, Interpretation, and Emotion.
+
+    The visual design is fixed. Only the numbers change per request.
+
+servers:
+  - url: https://YOUR_DOMAIN_HERE
+    description: Replace with your deployed server URL
+
+paths:
+  /generate-map:
+    post:
+      operationId: generateReflectionMap
+      summary: Generate a Personal Reflection Map image
+      description: >
+        Accepts 8 percentage values (0–100) and returns a reflection map.
+        Use the `format` query parameter to choose the output:
+          - `svg`  → SVG markup (default, best for embedding in web pages)
+          - `png`  → Binary PNG image (best for display in ChatGPT / Custom GPT)
+          - `json` → JSON with both SVG string and base64 PNG data URL
+      parameters:
+        - name: format
+          in: query
+          required: false
+          description: Output format (svg | png | json). Defaults to svg.
+          schema:
+            type: string
+            enum: [svg, png, json]
+            default: svg
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReflectionMapInput'
+            example:
+              user_objective: 75
+              user_facts: 60
+              user_interpretation: 45
+              user_emotion: 80
+              other_objective: 50
+              other_facts: 70
+              other_interpretation: 30
+              other_emotion: 55
+      responses:
+        '200':
+          description: >
+            Success. Returns the map in the requested format.
+            For SVG/PNG formats the body is the raw image data.
+            For JSON the body is an object with svg and dataUrl fields.
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                description: SVG image markup
+            image/png:
+              schema:
+                type: string
+                format: binary
+                description: PNG binary image
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReflectionMapJsonResponse'
+        '400':
+          description: >
+            Validation error. One or more required fields are missing,
+            not a number, or outside the 0–100 range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error during image generation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ReflectionMapInput:
+      type: object
+      required:
+        - user_objective
+        - user_facts
+        - user_interpretation
+        - user_emotion
+        - other_objective
+        - other_facts
+        - other_interpretation
+        - other_emotion
+      properties:
+        user_objective:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "My objective dimension — what I wanted or aimed at (0–100)"
+        user_facts:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "My facts dimension — observable information I relied on (0–100)"
+        user_interpretation:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "My interpretation dimension — meaning I gave to events (0–100)"
+        user_emotion:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "My emotion dimension — feelings I experienced (0–100)"
+        other_objective:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "Other's objective dimension — what they wanted or aimed at (0–100)"
+        other_facts:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "Other's facts dimension — observable information they relied on (0–100)"
+        other_interpretation:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "Other's interpretation dimension — meaning they gave to events (0–100)"
+        other_emotion:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "Other's emotion dimension — feelings they experienced (0–100)"
+
+    ReflectionMapJsonResponse:
+      type: object
+      properties:
+        svg:
+          type: string
+          description: Full SVG markup string
+        dataUrl:
+          type: string
+          description: "Base64-encoded PNG as a data URL: data:image/png;base64,..."
+        values:
+          $ref: '#/components/schemas/ReflectionMapInput'
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Short error category
+        details:
+          type: array
+          items:
+            type: string
+          description: List of specific validation messages
+        message:
+          type: string
+          description: Technical error message (for 500 errors)
